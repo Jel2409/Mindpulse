@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Mindpulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <nav id="sidebar"></nav>
+
+    <div class="main-content">
+      <header id="topbar"></header>
+
+      <div class="page-body">
+        <p class="dash-greeting" id="greeting">Good morning!</p>
+
+        <!-- Hero -->
+        <div class="dash-hero">
+          <div class="dash-hero-content">
+            <span class="dash-hero-label">TODAY'S INTENTION</span>
+            <h1 class="dash-hero-heading">Still the mind,<br>awaken the soul</h1>
+            <p class="dash-hero-sub">You've meditated 5 days in a row. Your mind is finding its rhythm — keep the momentum going with today's featured session.</p>
+            <div class="dash-hero-actions">
+              <button class="btn dash-btn-primary" onclick="window.location.href='/meditation.html'">▶ Today's Session</button>
+              <button class="btn dash-btn-secondary" onclick="window.location.href='/meditation.html'">View all sessions</button>
+            </div>
+          </div>
+          <div class="dash-hero-orb" aria-hidden="true">
+            <div class="dash-orb-ring dash-orb-ring--1"></div>
+            <div class="dash-orb-ring dash-orb-ring--2"></div>
+            <div class="dash-orb-ring dash-orb-ring--3"></div>
+            <div class="dash-orb-core"></div>
+            <span class="dash-orb-label">BREATHE</span>
+          </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="dash-stats-row dash-stats-row--4">
+          <div class="dash-stat-card">
+            <div class="dash-stat-icon">🧘</div>
+            <div class="dash-stat-body">
+              <div class="dash-stat-value" id="stat-sessions">—</div>
+              <div class="dash-stat-label">Sessions Completed</div>
+            </div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-icon">⏱️</div>
+            <div class="dash-stat-body">
+              <div class="dash-stat-value" id="stat-minutes">—</div>
+              <div class="dash-stat-label">Total Meditation Time</div>
+            </div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-icon">🔥</div>
+            <div class="dash-stat-body">
+              <div class="dash-stat-value" id="stat-streak">—</div>
+              <div class="dash-stat-label">Day Streak</div>
+            </div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-icon">📊</div>
+            <div class="dash-stat-body">
+              <div class="dash-stat-value" id="stat-avg">—</div>
+              <div class="dash-stat-label">Avg. Session (min)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom 2-col layout -->
+        <div class="dash-bottom-grid">
+
+          <!-- Left: Recommended Sessions -->
+          <div class="dash-recommended">
+            <div class="dash-section-header">
+              <h2 class="dash-section-title">Recommended for you</h2>
+              <a href="/meditation.html" class="dash-see-all">See all →</a>
+            </div>
+            <div class="dash-sessions-list" id="sessions-list"></div>
+          </div>
+
+          <!-- Right: Weekly Chart + Quote -->
+          <div>
+            <div class="dash-chart-card">
+              <div class="dash-section-header">
+                <h2 class="dash-section-title">This Week</h2>
+              </div>
+              <div class="dash-weekly-chart" id="weekly-chart"></div>
+            </div>
+
+            <!-- Quote Widget -->
+            <div class="dash-quote-widget">
+              <div class="dash-quote-mark">"</div>
+              <p class="dash-quote-text" id="dash-quote-text">Peace comes from within. Do not seek it without.</p>
+              <div class="dash-quote-author" id="dash-quote-author">— Buddha</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Upcoming Sessions -->
+        <div class="dash-upcoming-section">
+          <div class="dash-section-header">
+            <h2 class="dash-section-title">Upcoming Sessions</h2>
+            <a href="/meditation-timer.html" class="dash-see-all">Schedule →</a>
+          </div>
+          <div class="dash-upcoming-list" id="upcoming-list"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <button class="sidebar-hamburger" aria-label="Toggle menu"
+    onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+  <script src="/script.js"></script>
+  <script>
+    requireAuth();
+
+    function getGreeting() {
+      const h = new Date().getHours();
+      if (h < 12) return 'morning';
+      if (h < 18) return 'afternoon';
+      return 'evening';
+    }
+
+    const QUOTES = [
+      { text: 'Peace comes from within. Do not seek it without.', author: 'Buddha' },
+      { text: 'The present moment always will have been.', author: 'Eckhart Tolle' },
+      { text: 'You cannot stop the waves, but you can learn to surf.', author: 'Jon Kabat-Zinn' },
+      { text: 'Breath is the bridge between body and mind.', author: 'Thich Nhat Hanh' },
+      { text: 'Wherever you are, be all there.', author: 'Jim Elliot' },
+      { text: 'What you think, you become.', author: 'Buddha' },
+    ];
+
+    const UPCOMING = [
+      { name: 'Evening Wind-Down',  time: 'Today · 9:00 PM · 20 min',      dot: '#2e6f4e', href: '/meditation.html' },
+      { name: 'Gratitude Practice', time: 'Tomorrow · 7:30 AM · 10 min',   dot: '#c4a25a', href: '/meditation.html' },
+      { name: 'Live Group: Moon Circle', time: 'Wednesday · 6:00 PM · 45 min · 12 joined', dot: '#7baef0', href: '/meditation.html' },
+    ];
+
+    function renderQuote() {
+      const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+      document.getElementById('dash-quote-text').textContent = q.text;
+      document.getElementById('dash-quote-author').textContent = '— ' + q.author;
+    }
+
+    function renderUpcoming() {
+      document.getElementById('upcoming-list').innerHTML = UPCOMING.map(u => `
+        <a href="${u.href}" class="dash-upcoming-item">
+          <span class="dash-upcoming-dot" style="background:${u.dot}"></span>
+          <div class="dash-upcoming-info">
+            <div class="dash-upcoming-name">${u.name}</div>
+            <div class="dash-upcoming-time">${u.time}</div>
+          </div>
+          <span class="dash-upcoming-arrow">›</span>
+        </a>
+      `).join('');
+    }
+
+    function renderWeeklyChart(activityLog) {
+      const chart = document.getElementById('weekly-chart');
+      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const today = new Date();
+      // Build last 7 days (oldest → newest)
+      const data = Array.from({length: 7}, (_, i) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() - (6 - i));
+        const key = d.toISOString().slice(0, 10);
+        const entry = (activityLog || []).find(a => a.date === key);
+        return { dayIdx: d.getDay(), minutes: entry ? entry.minutes : 0, label: days[d.getDay()] };
+      });
+      const max = Math.max(...data.map(d => d.minutes), 1);
+      chart.innerHTML = data.map(d => {
+        const h = Math.round((d.minutes / max) * 100);
+        return `<div class="dash-chart-bar-wrap">
+          <div class="dash-chart-bar ${d.minutes>0?'has-sessions':''}" style="height:${Math.max(h,8)}%" title="${d.minutes} min"></div>
+          <div class="dash-chart-day">${d.label}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderSessions(meditations) {
+      const list = document.getElementById('sessions-list');
+      list.innerHTML = meditations.slice(0, 5).map(m => {
+        const mins = Math.round((m.duration || 0) / 60) || m.duration;
+        const href = `/meditation.html?session=${m.id}`;
+        return `
+        <div class="dash-session-card" onclick="window.location.href='${href}'" role="button" tabindex="0"
+          aria-label="${m.title}, ${mins} minutes">
+          <div class="dash-session-emoji">${m.emoji}</div>
+          <div class="dash-session-info">
+            <div class="dash-session-title">${m.title}</div>
+            <div class="dash-session-meta">${m.category}</div>
+          </div>
+          <div class="dash-session-badge">${mins} min</div>
+        </div>`;
+      }).join('');
+    }
+
+    async function init() {
+      renderWeeklyChart([]);
+      try {
+        const res = await apiFetch('/api/user/profile');
+        const data = await res.json();
+        renderWeeklyChart(data.activityLog || []);
+        const name = data.name || '';
+        document.getElementById('greeting').textContent = `Good ${getGreeting()}, ${name} 👋`;
+        const stats = data.stats || {};
+        document.getElementById('stat-sessions').textContent = stats.sessions ?? 0;
+        document.getElementById('stat-minutes').textContent = stats.totalMinutes ?? 0;
+        document.getElementById('stat-streak').textContent = stats.streak ?? 0;
+        const avg = stats.sessions ? Math.round((stats.totalMinutes ?? 0) / stats.sessions) : 0;
+        document.getElementById('stat-avg').textContent = avg || '—';
+        // Update hero sub-text with real streak
+        const heroSub = document.querySelector('.dash-hero-sub');
+        if (heroSub) {
+          const streak = stats.streak ?? 0;
+          heroSub.textContent = streak > 0
+            ? `You've meditated ${streak} day${streak !== 1 ? 's' : ''} in a row. Your mind is finding its rhythm — keep the momentum going with today's featured session.`
+            : `Welcome to Mindpulse. Start your first session today and begin building a mindfulness habit.`;
+        }
+        renderSidebar();
+        renderTopbar(name);
+        const streakEl = document.getElementById('sidebar-streak-num');
+        if (streakEl) streakEl.textContent = `${stats.streak ?? 0} Day Streak`;
+      } catch(e) {
+        renderSidebar(); renderTopbar('');
+      }
+      try {
+        const res = await apiFetch('/api/meditations');
+        renderSessions(await res.json());
+      } catch(_) {}
+    }
+
+    init();
+    renderQuote();
+    renderUpcoming();
+
+    // Re-fetch stats when user returns to this tab (e.g. after completing a session)
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        console.log('[Dashboard] Tab visible, refreshing stats...');
+        init();
+      }
+    });
+  </script>
+</body>
+</html>

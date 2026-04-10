@@ -1,0 +1,25 @@
+{
+  "name": "mindpulse",
+  "version": "1.0.0",
+  "description": "Premium meditation web app",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "jest --runInBand",
+    "test:run": "jest --runInBand --forceExit"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-session": "^1.19.0",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.3.1",
+    "nodemailer": "^8.0.4"
+  },
+  "devDependencies": {
+    "fast-check": "^3.0.0",
+    "jest": "^29.0.0",
+    "supertest": "^6.0.0"
+  }
+}

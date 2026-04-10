@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meditation Timer — Mindpulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+
+    /* ── Page ── */
+    body { background: radial-gradient(ellipse at center, #f3efe8 0%, #e8e1d5 100%) !important; }
+    .main-content { background: transparent; }
+
+    .page-body.mt-page-outer {
+      background: transparent;
+      min-height: calc(100vh - var(--topbar-h));
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1.25rem 3rem;
+      width: 100%;
+    }
+
+    .mt-page {
+      max-width: 620px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .mt-page-title {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.3px;
+      margin-bottom: 1.75rem;
+      align-self: flex-start;
+    }
+
+    /* ── Card ── */
+    .mt-card {
+      background: transparent;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.75rem;
+      width: 100%;
+    }
+
+    /* ── Ring ── */
+    .mt-ring-wrap {
+      position: relative;
+      width: 340px;
+      height: 340px;
+      flex-shrink: 0;
+    }
+
+    /* Breathing glow behind ring */
+    .mt-ring-glow {
+      position: absolute;
+      inset: -20px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(107,158,112,0.18) 0%, transparent 70%);
+      animation: breatheGlow 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes breatheGlow {
+      0%, 100% { transform: scale(0.92); opacity: 0.6; }
+      50%       { transform: scale(1.08); opacity: 1; }
+    }
+
+    .mt-ring-svg {
+      position: absolute;
+      inset: 0;
+      transform: rotate(-90deg);
+      filter: drop-shadow(0 0 18px rgba(107,158,112,0.3));
+    }
+    .mt-ring-bg {
+      fill: none;
+      stroke: rgba(200,195,185,0.5);
+      stroke-width: 3;
+    }
+    .mt-ring-progress {
+      fill: none;
+      stroke: url(#timerGradient);
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s linear;
+    }
+
+    /* Breathing pulse on the inner circle */
+    .mt-ring-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+    }
+    .mt-ring-inner.breathing {
+      animation: breathePulse 4s ease-in-out infinite;
+    }
+    @keyframes breathePulse {
+      0%, 100% { transform: scale(0.97); }
+      50%       { transform: scale(1.03); }
+    }
+
+    .mt-time {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 58px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -3px;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .mt-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* ── Duration presets ── */
+    .mt-duration-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .mt-duration-btn {
+      padding: 8px 18px;
+      border-radius: 50px;
+      border: 1.5px solid #ddd6cc;
+      background: white;
+      color: var(--text-light);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .mt-duration-btn:hover {
+      border-color: var(--sage-light);
+      color: var(--sage-light);
+      transform: translateY(-1px);
+    }
+    .mt-duration-btn.active {
+      background: var(--sage-dark);
+      border-color: var(--sage-dark);
+      color: white;
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(22,42,31,0.25);
+    }
+    .mt-duration-btn:active { transform: scale(0.95); }
+
+    .mt-custom-dur-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .mt-custom-dur-input {
+      width: 72px;
+      padding: 8px 12px;
+      border: 1.5px solid #ddd6cc;
+      border-radius: 50px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+      background: white;
+      outline: none;
+      text-align: center;
+      font-family: inherit;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .mt-custom-dur-input::placeholder { color: var(--text-muted); font-weight: 500; }
+    .mt-custom-dur-input:focus {
+      border-color: var(--sage-light);
+      box-shadow: 0 0 0 3px rgba(46,111,78,0.1);
+    }
+    .mt-custom-dur-label {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* ── Controls ── */
+    .mt-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.25rem;
+    }
+    .mt-btn-circle {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      border: none;
+      background: #ede8e0;
+      color: var(--text-light);
+      font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      font-weight: 700;
+      font-family: inherit;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .mt-btn-circle:hover {
+      background: #ddd6cc;
+      color: var(--text);
+      transform: scale(1.1);
+    }
+    .mt-btn-circle:active { transform: scale(0.95); }
+
+    .mt-btn-play {
+      width: 70px; height: 70px;
+      font-size: 1.4rem;
+      background: var(--sage);
+      color: white;
+      box-shadow: 0 10px 25px rgba(31,61,43,0.3);
+    }
+    .mt-btn-play:hover {
+      background: var(--sage-light);
+      box-shadow: 0 14px 30px rgba(46,111,78,0.4);
+      transform: scale(1.1);
+    }
+    .mt-btn-play:active { transform: scale(0.95); }
+
+    .mt-btn-plus {
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Complete banner ── */
+    .mt-complete {
+      display: none;
+      width: 100%;
+      padding: 0.8rem 1.25rem;
+      background: var(--success-light);
+      color: var(--success);
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-align: center;
+      animation: fadeSlideIn 0.4s ease;
+    }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Divider ── */
+    .mt-divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #ddd6cc, transparent);
+    }
+
+    /* ── Ambient sounds ── */
+    .mt-sounds-section { width: 100%; }
+    .mt-sounds-title {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 3.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .mt-sounds-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .mt-sound-card {
+      background: rgba(255,255,255,0.75);
+      border-radius: 16px;
+      padding: 1rem 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.45rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .mt-sound-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      border-color: rgba(107,158,112,0.3);
+    }
+    .mt-sound-card:active { transform: scale(0.96); }
+    .mt-sound-card.active {
+      border-color: var(--sage-light);
+      background: rgba(107,158,112,0.06);
+      box-shadow: 0 0 0 3px rgba(46,111,78,0.1), 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .mt-sound-card.unavailable { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+    .mt-sound-icon-wrap {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+    }
+    .c-rain   { background: #dbeafe; }
+    .c-ocean  { background: #cffafe; }
+    .c-forest { background: #dcfce7; }
+    .c-fire   { background: #fef3c7; }
+    .c-wind   { background: #e0f2fe; }
+    .c-night  { background: #ede9fe; }
+
+    .mt-sound-name {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-light);
+    }
+
+    /* ── Volume ── */
+    .mt-volume-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding-top: 1rem;
+      border-top: 1px solid #e8e2d8;
+      margin-top: 0.25rem;
+    }
+    .mt-volume-row label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-light);
+      white-space: nowrap;
+    }
+    .mt-volume-row input[type="range"] {
+      flex: 1;
+      accent-color: var(--sage-light);
+      cursor: pointer;
+    }
+
+    /* ── Session start fade ── */
+    .mt-card.session-active .mt-ring-wrap {
+      animation: none;
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 540px) {
+      .page-body.mt-page-outer { padding: 1.25rem 1rem 3rem; }
+      .mt-card { padding: 1.75rem 1.25rem 1.5rem; gap: 1.4rem; }
+      .mt-ring-wrap { width: 240px; height: 240px; }
+      .mt-time { font-size: 42px; }
+      .mt-sounds-grid { gap: 8px; }
+      .mt-duration-btn { padding: 6px 13px; font-size: 0.74rem; }
+      .mt-btn-play { width: 60px; height: 60px; font-size: 1.2rem; }
+      .mt-btn-circle { width: 42px; height: 42px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <nav id="sidebar"></nav>
+    <div class="main-content">
+      <header id="topbar"></header>
+      <div class="page-body mt-page-outer">
+        <div class="mt-page">
+          <h1 class="mt-page-title">Meditation Timer</h1>
+
+          <div class="mt-card" id="mt-card">
+
+            <!-- Ring timer -->
+            <div class="mt-ring-wrap">
+              <div class="mt-ring-glow"></div>
+              <svg class="mt-ring-svg" viewBox="0 0 340 340" aria-hidden="true">
+                <defs>
+                  <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%"   stop-color="#6b9e70" />
+                    <stop offset="100%" stop-color="#c2d9c5" />
+                  </linearGradient>
+                </defs>
+                <circle class="mt-ring-bg"       cx="170" cy="170" r="155" />
+                <circle class="mt-ring-progress" cx="170" cy="170" r="155"
+                  id="ring-progress"
+                  stroke-dasharray="974.18"
+                  stroke-dashoffset="0" />
+              </svg>
+              <div class="mt-ring-inner" id="ring-inner">
+                <div class="mt-time" id="mt-display">10:00</div>
+                <div class="mt-label">Meditating</div>
+              </div>
+            </div>
+
+            <!-- Duration presets -->
+            <div class="mt-duration-row" id="duration-row">
+              <button class="mt-duration-btn"        data-min="5">5 min</button>
+              <button class="mt-duration-btn active" data-min="10">10 min</button>
+              <button class="mt-duration-btn"        data-min="15">15 min</button>
+              <button class="mt-duration-btn"        data-min="20">20 min</button>
+              <button class="mt-duration-btn"        data-min="30">30 min</button>
+              <span class="mt-custom-dur-wrap">
+                <input type="number" id="custom-min" min="1" max="120" placeholder="Custom"
+                  class="mt-custom-dur-input" aria-label="Custom duration in minutes" />
+                <span class="mt-custom-dur-label">min</span>
+              </span>
+            </div>
+
+            <!-- Controls -->
+            <div class="mt-controls">
+              <button class="mt-btn-circle" id="btn-restart" aria-label="Restart" title="Restart">↺</button>
+              <button class="mt-btn-circle mt-btn-play" id="btn-play" aria-label="Play / Pause">▶</button>
+              <button class="mt-btn-circle mt-btn-plus" id="btn-plus" aria-label="Add 1 minute" title="+1 min">+1</button>
+            </div>
+
+            <!-- Complete banner -->
+            <div class="mt-complete" id="mt-complete"></div>
+
+            <div class="mt-divider"></div>
+
+            <!-- Ambient sounds -->
+            <div class="mt-sounds-section">
+              <div class="mt-sounds-title">Ambient Sound</div>
+              <div class="mt-sounds-grid">
+                <div class="mt-sound-card" id="mt-card-rain"   data-sound="rain"   role="button" tabindex="0">
+                  <div class="mt-sound-icon-wrap c-rain">🌧️</div>
+                  <div class="mt-sound-name">Rain</div>
+                </div>
+                <div class="mt-sound-card" id="mt-card-ocean"  data-sound="ocean"  role="button" tabindex="0">
+                  <div class="mt-sound-icon-wrap c-ocean">🌊</div>
+                  <div class="mt-sound-name">Ocean</div>
+                </div>
+                <div class="mt-sound-card" id="mt-card-forest" data-sound="forest" role="button" tabindex="0">
+                  <div class="mt-sound-icon-wrap c-forest">🌲</div>
+                  <div class="mt-sound-name">Forest</div>
+                </div>
+                <div class="mt-sound-card" id="mt-card-fire"   data-sound="fire"   role="button" tabindex="0">
+                  <div class="mt-sound-icon-wrap c-fire">🔥</div>
+                  <div class="mt-sound-name">Fire</div>
+                </div>
+                <div class="mt-sound-card" id="mt-card-wind"   data-sound="wind"   role="button" tabindex="0">
+                  <div class="mt-sound-icon-wrap c-wind">💨</div>
+                  <div class="mt-sound-name">Wind</div>
+                </div>
+                <div class="mt-sound-card" id="mt-card-night"  data-sound="night"  role="button" tabindex="0">
+                  <div class="mt-sound-icon-wrap c-night">🌙</div>
+                  <div class="mt-sound-name">Night</div>
+                </div>
+              </div>
+
+              <!-- Volume -->
+              <div class="mt-volume-row">
+                <label for="mt-volume">🔊 Volume</label>
+                <input type="range" id="mt-volume" min="0" max="1" step="0.01" value="0.3" />
+              </div>
+            </div>
+
+          </div><!-- /.mt-card -->
+        </div><!-- /.mt-page -->
+      </div><!-- /.page-body -->
+    </div><!-- /.main-content -->
+  </div><!-- /.app-layout -->
+
+  <button class="sidebar-hamburger" aria-label="Toggle menu"
+    onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+  <script src="/script.js"></script>
+  <script>
+    requireAuth();
+
+    // ── Constants ─────────────────────────────────────────────────────────
+    const RADIUS       = 155;
+    const CIRCUMFERENCE = 2 * Math.PI * RADIUS; // 974.18
+
+    // ── State ─────────────────────────────────────────────────────────────
+    const state = { duration: 10 * 60, remaining: 10 * 60, running: false, intervalId: null, startedAt: null };
+
+    // ── Sound map ─────────────────────────────────────────────────────────
+    // Each sound uses a plain HTMLAudioElement with loop = true.
+    // This is completely independent of the timer — no onended, no callbacks.
+    const TIMER_SOUNDS = [
+      { id: 'rain',   src: '/audio/rain.wav' },
+      { id: 'ocean',  src: '/audio/ocean.wav' },
+      { id: 'forest', src: '/audio/forest.wav' },
+      { id: 'fire',   src: '/audio/brown-noise.wav' },
+      { id: 'wind',   src: '/audio/wind.wav' },
+      { id: 'night',  src: '/audio/ambient.wav' },
+    ];
+
+    // Pre-build Audio elements with loop = true so they're ready instantly
+    const audioElements = {};
+    TIMER_SOUNDS.forEach(({ id, src }) => {
+      const a = new Audio(src);
+      a.loop = true;   // loops natively — never fires 'ended', never touches timer
+      a.volume = 0.3;
+      audioElements[id] = a;
+    });
+
+    const audioState = { activeId: null };
+
+    function getActiveAudio() {
+      return audioState.activeId ? audioElements[audioState.activeId] : null;
+    }
+
+    // ── DOM refs ──────────────────────────────────────────────────────────
+    const displayEl  = document.getElementById('mt-display');
+    const ringEl     = document.getElementById('ring-progress');
+    const ringInner  = document.getElementById('ring-inner');
+    const completeEl = document.getElementById('mt-complete');
+    const playBtn    = document.getElementById('btn-play');
+    const cardEl     = document.getElementById('mt-card');
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+    function fmt(s) {
+      return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    }
+
+    function updateUI() {
+      displayEl.textContent = fmt(state.remaining);
+      const pct = state.duration > 0 ? state.remaining / state.duration : 1;
+      ringEl.style.strokeDashoffset = CIRCUMFERENCE * (1 - pct);
+    }
+
+    // ── Timer ─────────────────────────────────────────────────────────────
+    function setDuration(minutes) {
+      stopTimer();
+      state.duration  = minutes * 60;
+      state.remaining = state.duration;
+      completeEl.style.display = 'none';
+      updateUI();
+    }
+
+    function stopTimer() {
+      if (state.intervalId) { clearInterval(state.intervalId); state.intervalId = null; }
+      state.running = false;
+      state.startedAt = null;
+      playBtn.textContent = '▶';
+      playBtn.setAttribute('aria-label', 'Play');
+      ringInner.classList.remove('breathing');
+      cardEl.classList.remove('session-active');
+      // Stop audio independently — no coupling to timer state
+      const audio = getActiveAudio();
+      if (audio) { audio.pause(); audio.currentTime = 0; }
+    }
+
+    function tick() {
+      state.remaining--;
+      if (state.remaining <= 0) {
+        state.remaining = 0;
+        updateUI();
+        // 1. Stop the interval — timer is done
+        clearInterval(state.intervalId);
+        state.intervalId = null;
+        state.running = false;
+        playBtn.textContent = '▶';
+        playBtn.setAttribute('aria-label', 'Play');
+        ringInner.classList.remove('breathing');
+        cardEl.classList.remove('session-active');
+        // 2. Stop audio separately — audio.loop was true, so it never fired 'ended'
+        const audio = getActiveAudio();
+        if (audio) { audio.pause(); audio.currentTime = 0; }
+        onComplete();
+        return;
+      }
+      updateUI();
+    }
+
+    function onComplete() {
+      completeEl.style.display = 'block';
+      completeEl.innerHTML = '🎉 Session complete! Great work. <a href="/progress.html" style="color:var(--success);font-weight:700;text-decoration:underline;margin-left:0.5rem;">View Progress →</a>';
+      apiFetch('/api/user/session', {
+        method: 'POST',
+        body: JSON.stringify({ minutes: Math.round(state.duration / 60) })
+      }).catch(() => {});
+    }
+
+    // ── Audio — fully decoupled from timer ────────────────────────────────
+    // Uses HTMLAudioElement with loop = true.
+    // Timer never listens to any audio events — setInterval drives everything.
+    function startAudio() {
+      const audio = getActiveAudio();
+      if (!audio) return;
+      audio.currentTime = 0;
+      audio.play().catch(() => {}); // autoplay policy — silent fail, timer unaffected
+    }
+
+    function stopAllAudio() {
+      Object.values(audioElements).forEach(a => { a.pause(); a.currentTime = 0; });
+    }
+
+    function handleSoundClick(id) {
+      const wasActive = audioState.activeId === id;
+      document.querySelectorAll('.mt-sound-card').forEach(c => c.classList.remove('active'));
+      stopAllAudio();
+      if (wasActive) { audioState.activeId = null; return; }
+      audioState.activeId = id;
+      const card = document.getElementById(`mt-card-${id}`);
+      if (card) card.classList.add('active');
+      if (state.running) startAudio();
+    }
+
+    // ── Event listeners ───────────────────────────────────────────────────
+
+    // Duration presets
+    document.getElementById('duration-row').querySelectorAll('.mt-duration-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mt-duration-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('custom-min').value = '';
+        setDuration(parseInt(btn.dataset.min));
+      });
+    });
+
+    // Custom duration
+    document.getElementById('custom-min').addEventListener('change', e => {
+      const val = parseInt(e.target.value);
+      if (val > 0 && val <= 120) {
+        document.querySelectorAll('.mt-duration-btn').forEach(b => b.classList.remove('active'));
+        setDuration(val);
+      }
+    });
+
+    // Play / Pause
+    // setInterval(tick, 1000) is the sole timer driver — no audio events involved.
+    // audio.loop = true handles looping natively without firing 'ended'.
+    playBtn.addEventListener('click', () => {
+      if (state.remaining <= 0) return;
+      if (state.running) {
+        stopTimer();
+      } else {
+        state.running = true;
+        state.startedAt = Date.now();
+        playBtn.textContent = '⏸';
+        playBtn.setAttribute('aria-label', 'Pause');
+        ringInner.classList.add('breathing');
+        cardEl.classList.add('session-active');
+        // Timer: pure setInterval countdown, zero dependency on audio
+        state.intervalId = setInterval(tick, 1000);
+        // Audio: plays and loops independently; any failure won't affect timer
+        startAudio();
+      }
+    });
+
+    // Page Visibility API — correct timer drift when tab was hidden/throttled
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && state.running && state.startedAt !== null) {
+        // Calculate how many seconds should have elapsed vs how many we counted
+        const elapsed = Math.floor((Date.now() - state.startedAt) / 1000);
+        const expected = state.duration - elapsed;
+        if (expected < state.remaining) {
+          state.remaining = Math.max(0, expected);
+          updateUI();
+          if (state.remaining <= 0) {
+            clearInterval(state.intervalId);
+            state.intervalId = null;
+            state.running = false;
+            playBtn.textContent = '▶';
+            playBtn.setAttribute('aria-label', 'Play');
+            ringInner.classList.remove('breathing');
+            cardEl.classList.remove('session-active');
+            const audio = getActiveAudio();
+            if (audio) { audio.pause(); audio.currentTime = 0; }
+            onComplete();
+          }
+        }
+      }
+    });
+
+    // Restart
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      stopTimer();
+      state.remaining = state.duration;
+      completeEl.style.display = 'none';
+      updateUI();
+    });
+
+    // +1 min
+    document.getElementById('btn-plus').addEventListener('click', () => {
+      state.duration  += 60;
+      state.remaining += 60;
+      updateUI();
+    });
+
+    // Sound cards
+    document.querySelectorAll('.mt-sound-card').forEach(card => {
+      card.addEventListener('click', () => handleSoundClick(card.dataset.sound));
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSoundClick(card.dataset.sound); }
+      });
+    });
+
+    // Volume — applies to whichever audio element is active
+    document.getElementById('mt-volume').addEventListener('input', e => {
+      const vol = parseFloat(e.target.value);
+      Object.values(audioElements).forEach(a => { a.volume = vol; });
+    });
+
+    // Cleanup on page leave
+    window.addEventListener('pagehide', () => { stopTimer(); stopAllAudio(); });
+
+    // ── Init ──────────────────────────────────────────────────────────────
+    ringEl.style.strokeDasharray  = CIRCUMFERENCE;
+    ringEl.style.strokeDashoffset = 0;
+    updateUI();
+
+    async function init() {
+      try {
+        const res  = await apiFetch('/api/user/profile');
+        const data = await res.json();
+        renderSidebar();
+        renderTopbar(data.name || '');
+      } catch (_) {
+        renderSidebar();
+        renderTopbar('');
+      }
+    }
+    init();
+  </script>
+</body>
+</html>

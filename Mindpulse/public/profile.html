@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile — Mindpulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <nav id="sidebar"></nav>
+    <div class="main-content">
+      <header id="topbar"></header>
+      <div class="page-body">
+
+        <div class="profile-page">
+
+          <!-- Profile Header -->
+          <div class="profile-header-card">
+            <div class="profile-header-avatar" id="profile-avatar">?</div>
+            <div class="profile-header-info">
+              <div class="profile-header-name" id="profile-name">—</div>
+              <div class="profile-header-email" id="profile-email">—</div>
+              <div class="profile-header-since" id="profile-since"></div>
+            </div>
+          </div>
+
+          <!-- Preferences Section -->
+          <div class="prefs-section">
+            <div class="prefs-section-label">Preferences</div>
+            <div class="prefs-list">
+
+              <!-- Daily Reminder -->
+              <div class="pref-row">
+                <div class="pref-row-left">
+                  <div class="pref-icon">🔔</div>
+                  <div class="pref-text">
+                    <div class="pref-label">Daily Reminder</div>
+                    <div class="pref-desc">Get notified to meditate each day</div>
+                  </div>
+                </div>
+                <label class="toggle" aria-label="Toggle daily reminder">
+                  <input type="checkbox" id="toggle-notifications" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <!-- Session Sounds -->
+              <div class="pref-row">
+                <div class="pref-row-left">
+                  <div class="pref-icon">🎵</div>
+                  <div class="pref-text">
+                    <div class="pref-label">Session Sounds</div>
+                    <div class="pref-desc">Play ambient sounds during sessions</div>
+                  </div>
+                </div>
+                <label class="toggle" aria-label="Toggle session sounds">
+                  <input type="checkbox" id="toggle-sounds" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <!-- Streak Notifications -->
+              <div class="pref-row">
+                <div class="pref-row-left">
+                  <div class="pref-icon">🔥</div>
+                  <div class="pref-text">
+                    <div class="pref-label">Streak Notifications</div>
+                    <div class="pref-desc">Alerts when your streak is at risk</div>
+                  </div>
+                </div>
+                <label class="toggle" aria-label="Toggle streak notifications">
+                  <input type="checkbox" id="toggle-streak" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <!-- Reminder Time -->
+              <div class="pref-row">
+                <div class="pref-row-left">
+                  <div class="pref-icon">⏰</div>
+                  <div class="pref-text">
+                    <div class="pref-label">Reminder Time</div>
+                    <div class="pref-desc">When to send your daily reminder</div>
+                  </div>
+                </div>
+                <input type="time" id="reminder-time" class="pref-control" value="07:00" aria-label="Reminder time" />
+              </div>
+
+              <!-- Default Session Length -->
+              <div class="pref-row">
+                <div class="pref-row-left">
+                  <div class="pref-icon">⏱️</div>
+                  <div class="pref-text">
+                    <div class="pref-label">Default Session Length</div>
+                    <div class="pref-desc">Duration for new meditation sessions</div>
+                  </div>
+                </div>
+                <select id="session-length" class="pref-control pref-select" aria-label="Default session length">
+                  <option value="5">5 min</option>
+                  <option value="10" selected>10 min</option>
+                  <option value="15">15 min</option>
+                  <option value="20">20 min</option>
+                  <option value="30">30 min</option>
+                </select>
+              </div>
+
+              <!-- App Theme -->
+              <div class="pref-row pref-row-last">
+                <div class="pref-row-left">
+                  <div class="pref-icon">🎨</div>
+                  <div class="pref-text">
+                    <div class="pref-label">App Theme</div>
+                    <div class="pref-desc">Choose your preferred appearance</div>
+                  </div>
+                </div>
+                <div class="theme-dropdown" id="theme-dropdown">
+                  <button class="theme-dropdown-trigger" id="theme-trigger" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="theme-swatch theme-swatch--sage" id="theme-trigger-swatch"></span>
+                    <span id="theme-trigger-label">Sage & Cream</span>
+                    <svg class="theme-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <div class="theme-dropdown-menu" id="theme-menu" role="listbox" aria-label="App theme">
+                    <div class="theme-option active" data-theme="sage-cream" data-swatch="sage" data-label="Sage & Cream" role="option">
+                      <span class="theme-swatch theme-swatch--sage"></span>
+                      <div class="theme-option-text">
+                        <span class="theme-option-name">Sage & Cream</span>
+                        <span class="theme-option-desc">Calm green + beige</span>
+                      </div>
+                      <svg class="theme-option-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                        <path d="M2.5 7l3.5 3.5 5.5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="theme-option" data-theme="ocean-blue" data-swatch="ocean" data-label="Ocean Blue" role="option">
+                      <span class="theme-swatch theme-swatch--ocean"></span>
+                      <div class="theme-option-text">
+                        <span class="theme-option-name">Ocean Blue</span>
+                        <span class="theme-option-desc">Blue gradients + glow</span>
+                      </div>
+                      <svg class="theme-option-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                        <path d="M2.5 7l3.5 3.5 5.5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="theme-option" data-theme="forest-dark" data-swatch="forest" data-label="Forest Dark" role="option">
+                      <span class="theme-swatch theme-swatch--forest"></span>
+                      <div class="theme-option-text">
+                        <span class="theme-option-name">Forest Dark</span>
+                        <span class="theme-option-desc">Dark mode + deep green</span>
+                      </div>
+                      <svg class="theme-option-check" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                        <path d="M2.5 7l3.5 3.5 5.5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Account Actions -->
+          <div class="prefs-section">
+            <div class="prefs-section-label">Account</div>
+            <div class="prefs-list">
+              <div class="pref-row pref-row-last">
+                <div class="pref-row-left">
+                  <div class="pref-icon">🚪</div>
+                  <div class="pref-text">
+                    <div class="pref-label">Sign Out</div>
+                    <div class="pref-desc">Clear your session from this device</div>
+                  </div>
+                </div>
+                <button class="pref-logout-btn" id="logout-btn">Log Out</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="sidebar-hamburger" aria-label="Toggle menu"
+    onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+  <script src="/script.js"></script>
+  <script>
+    requireAuth();
+
+    async function savePrefs(patch) {
+      try { await apiFetch('/api/user/preferences', { method: 'PUT', body: JSON.stringify(patch) }); } catch (_) {}
+    }
+
+    async function loadProfile() {
+      try {
+        const res  = await apiFetch('/api/user/profile');
+        const data = await res.json();
+        document.getElementById('profile-name').textContent  = data.name  || '—';
+        document.getElementById('profile-email').textContent = data.email || '—';
+        const initials = (data.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+        document.getElementById('profile-avatar').textContent = initials;
+        if (data.createdAt) {
+          document.getElementById('profile-since').textContent =
+            'Member since ' + new Date(data.createdAt).toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
+        }
+        const prefs = data.preferences || {};
+        if (prefs.notifications !== undefined) document.getElementById('toggle-notifications').checked = prefs.notifications;
+        if (prefs.sounds !== undefined) document.getElementById('toggle-sounds').checked = prefs.sounds;
+        if (prefs.streakAlerts !== undefined) document.getElementById('toggle-streak').checked = prefs.streakAlerts;
+        if (prefs.reminderTime) document.getElementById('reminder-time').value = prefs.reminderTime;
+        if (prefs.defaultSessionLength) document.getElementById('session-length').value = prefs.defaultSessionLength;
+        setActiveThemeCard(prefs.theme || localStorage.getItem('mp_theme') || 'sage-cream');
+        renderSidebar();
+        renderTopbar(data.name || '');
+      } catch (_) {
+        renderSidebar();
+        renderTopbar('');
+      }
+    }
+
+    // Theme dropdown
+    const trigger = document.getElementById('theme-trigger');
+    const menu    = document.getElementById('theme-menu');
+
+    function setActiveThemeCard(themeName) {
+      const opt = document.querySelector(`.theme-option[data-theme="${themeName}"]`);
+      if (!opt) return;
+      document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      document.getElementById('theme-trigger-label').textContent = opt.dataset.label;
+      const swatch = document.getElementById('theme-trigger-swatch');
+      swatch.className = `theme-swatch theme-swatch--${opt.dataset.swatch}`;
+    }
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = menu.classList.toggle('open');
+      trigger.setAttribute('aria-expanded', open);
+    });
+
+    document.addEventListener('click', () => {
+      menu.classList.remove('open');
+      trigger.setAttribute('aria-expanded', false);
+    });
+
+    document.querySelectorAll('.theme-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const theme = opt.dataset.theme;
+        setActiveThemeCard(theme);
+        applyTheme(theme);
+        localStorage.setItem('mp_theme', theme);
+        savePrefs({ theme });
+        menu.classList.remove('open');
+        trigger.setAttribute('aria-expanded', false);
+      });
+    });
+
+    // Toggle preferences
+    ['toggle-notifications','toggle-sounds','toggle-streak'].forEach(id => {
+      document.getElementById(id).addEventListener('change', () => {
+        savePrefs({
+          notifications: document.getElementById('toggle-notifications').checked,
+          sounds: document.getElementById('toggle-sounds').checked,
+          streakAlerts: document.getElementById('toggle-streak').checked,
+        });
+      });
+    });
+
+    document.getElementById('reminder-time').addEventListener('change', e => savePrefs({ reminderTime: e.target.value }));
+    document.getElementById('session-length').addEventListener('change', e => savePrefs({ defaultSessionLength: parseInt(e.target.value) }));
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      clearToken();
+      window.location.href = '/index.html';
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

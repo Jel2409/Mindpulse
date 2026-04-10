@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Breathwork — Mindpulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <nav id="sidebar"></nav>
+    <div class="main-content">
+      <header id="topbar"></header>
+      <div class="page-body">
+
+        <div class="bw-page">
+
+          <!-- Technique Tabs -->
+          <div class="bw-tabs" id="bw-type-grid">
+            <button class="bw-tab active" data-type="box">Box Breathing</button>
+            <button class="bw-tab" data-type="478">4-7-8 Technique</button>
+            <button class="bw-tab" data-type="calm">Calming Breath</button>
+            <button class="bw-tab" data-type="energize">Energizing Breath</button>
+          </div>
+
+          <!-- Description -->
+          <p class="bw-desc" id="bw-desc">Quiet, rhythmic breaths to increase energy levels and sharpen mental and focus for peak performance.</p>
+
+          <!-- Metrics -->
+          <div class="bw-stats">
+            <div class="bw-stat">
+              <div class="bw-stat-val" id="bw-rounds">0/<span id="bw-total-rounds">10</span></div>
+              <div class="bw-stat-lbl">Rounds</div>
+            </div>
+            <div class="bw-stat-divider"></div>
+            <div class="bw-stat">
+              <div class="bw-stat-val" id="bw-elapsed">0s</div>
+              <div class="bw-stat-lbl">Time Elapsed</div>
+            </div>
+            <div class="bw-stat-divider"></div>
+            <div class="bw-stat">
+              <div class="bw-stat-val" id="bw-benefit-label">Energy</div>
+              <div class="bw-stat-lbl">Benefit</div>
+            </div>
+          </div>
+
+          <!-- Duration pills -->
+          <div class="bw-dur-row" id="bw-duration-presets">
+            <button class="bw-dur-pill" data-rounds="5">5 rounds</button>
+            <button class="bw-dur-pill active" data-rounds="10">10 rounds</button>
+            <button class="bw-dur-pill" data-rounds="15">15 rounds</button>
+            <button class="bw-dur-pill" data-rounds="20">20 rounds</button>
+          </div>
+
+          <!-- Breathing Circle -->
+          <div class="bw-circle-area">
+            <div class="bw-circle-outer">
+              <svg class="bw-ring-svg" viewBox="0 0 200 200" aria-hidden="true">
+                <circle class="bw-ring-track" cx="100" cy="100" r="90"/>
+                <circle class="bw-ring-progress" id="bw-ring" cx="100" cy="100" r="90"/>
+              </svg>
+              <div class="bw-circle-inner" id="bw-circle">
+                <div class="bw-phase-text" id="bw-phase-text">Press Start</div>
+                <div class="bw-phase-count" id="bw-phase-count"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Start Button -->
+          <div class="bw-action-row">
+            <button class="bw-start-btn" id="btn-start">Start Breathing</button>
+            <button class="bw-stop-btn" id="btn-stop" disabled>Stop</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="sidebar-hamburger" aria-label="Toggle menu"
+    onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+  <script src="/script.js"></script>
+  <script>
+    requireAuth();
+
+    const TECHNIQUES = {
+      box:      {
+        desc: 'Equal-ratio breathing to calm the nervous system and improve focus.',
+        benefit: 'Focus',
+        phases: [{ label:'Inhale', cls:'inhale', dur:4000 }, { label:'Hold', cls:'hold', dur:4000 }, { label:'Exhale', cls:'exhale', dur:4000 }, { label:'Hold', cls:'hold', dur:4000 }]
+      },
+      '478':    {
+        desc: 'A natural tranquilizer for the nervous system. Great before sleep.',
+        benefit: 'Calm',
+        phases: [{ label:'Inhale', cls:'inhale', dur:4000 }, { label:'Hold', cls:'hold', dur:7000 }, { label:'Exhale', cls:'exhale', dur:8000 }]
+      },
+      calm:     {
+        desc: 'Slow, extended exhales to activate the parasympathetic nervous system.',
+        benefit: 'Relax',
+        phases: [{ label:'Inhale', cls:'inhale', dur:4000 }, { label:'Exhale', cls:'exhale', dur:6000 }]
+      },
+      energize: {
+        desc: 'Quiet, rhythmic breaths to increase energy levels and sharpen mental focus for peak performance.',
+        benefit: 'Energy',
+        phases: [{ label:'Inhale', cls:'inhale', dur:6000 }, { label:'Exhale', cls:'exhale', dur:2000 }]
+      },
+    };
+
+    const RING_CIRC = 2 * Math.PI * 90;
+
+    let currentType = 'energize';
+    let totalRounds = 10;
+    let phaseIdx = 0, timeoutId = null, countdownId = null, elapsedId = null;
+    let running = false, cycleCount = 0, elapsedSec = 0;
+
+    const circle     = document.getElementById('bw-circle');
+    const phaseText  = document.getElementById('bw-phase-text');
+    const phaseCount = document.getElementById('bw-phase-count');
+    const ring       = document.getElementById('bw-ring');
+    const btnStart   = document.getElementById('btn-start');
+    const btnStop    = document.getElementById('btn-stop');
+
+    ring.style.strokeDasharray = RING_CIRC;
+    ring.style.strokeDashoffset = RING_CIRC;
+
+    function setTechnique(type) {
+      currentType = type;
+      document.getElementById('bw-desc').textContent = TECHNIQUES[type].desc;
+      document.getElementById('bw-benefit-label').textContent = TECHNIQUES[type].benefit;
+    }
+
+    function updateMetrics() {
+      document.getElementById('bw-rounds').innerHTML = `${cycleCount}/<span id="bw-total-rounds">${totalRounds}</span>`;
+      document.getElementById('bw-elapsed').textContent = elapsedSec < 60 ? elapsedSec + 's' : Math.floor(elapsedSec/60) + 'm ' + (elapsedSec%60) + 's';
+    }
+
+    function animateRing(durationMs) {
+      ring.style.transition = `stroke-dashoffset ${durationMs}ms linear`;
+      ring.style.strokeDashoffset = 0;
+      setTimeout(() => {
+        ring.style.transition = 'none';
+        ring.style.strokeDashoffset = RING_CIRC;
+      }, durationMs + 50);
+    }
+
+    function applyPhase(idx) {
+      const phases = TECHNIQUES[currentType].phases;
+      const p = phases[idx];
+      circle.classList.remove('inhale', 'hold', 'exhale');
+      circle.classList.add(p.cls);
+      phaseText.textContent = p.label;
+      if (countdownId) { clearInterval(countdownId); countdownId = null; }
+      let remaining = Math.round(p.dur / 1000);
+      phaseCount.textContent = remaining + 's';
+      animateRing(p.dur);
+      countdownId = setInterval(() => {
+        remaining--;
+        phaseCount.textContent = remaining > 0 ? remaining + 's' : '';
+        if (remaining <= 0) { clearInterval(countdownId); countdownId = null; }
+      }, 1000);
+    }
+
+    function scheduleNext() {
+      if (!running) return;
+      const phases = TECHNIQUES[currentType].phases;
+      const p = phases[phaseIdx];
+      applyPhase(phaseIdx);
+      timeoutId = setTimeout(() => {
+        if (!running) return;
+        phaseIdx = (phaseIdx + 1) % phases.length;
+        if (phaseIdx === 0) {
+          cycleCount++;
+          updateMetrics();
+          if (cycleCount >= totalRounds) { stopSession(true); return; }
+        }
+        scheduleNext();
+      }, p.dur);
+    }
+
+    function stopSession(completed = false) {
+      running = false;
+      if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+      if (countdownId) { clearInterval(countdownId); countdownId = null; }
+      if (elapsedId) { clearInterval(elapsedId); elapsedId = null; }
+      circle.classList.remove('inhale', 'hold', 'exhale');
+      ring.style.transition = 'none';
+      ring.style.strokeDashoffset = RING_CIRC;
+      phaseText.textContent = completed ? '🎉 Done!' : 'Press Start';
+      phaseCount.textContent = '';
+      btnStart.disabled = false;
+      btnStop.disabled = true;
+      btnStart.textContent = 'Start Breathing';
+      if (completed && elapsedSec > 0) {
+        apiFetch('/api/user/session', { method: 'POST', body: JSON.stringify({ minutes: Math.max(1, Math.round(elapsedSec / 60)) }) }).catch(() => {});
+      }
+    }
+
+    btnStart.addEventListener('click', () => {
+      if (running) return;
+      // Clear any lingering timers before starting (defensive cleanup)
+      if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+      if (countdownId) { clearInterval(countdownId); countdownId = null; }
+      if (elapsedId) { clearInterval(elapsedId); elapsedId = null; }
+      running = true; phaseIdx = 0; cycleCount = 0; elapsedSec = 0;
+      btnStart.disabled = true; btnStop.disabled = false;
+      btnStart.textContent = 'Breathing...';
+      updateMetrics();
+      elapsedId = setInterval(() => { elapsedSec++; updateMetrics(); }, 1000);
+      console.log('[Breathwork] Started, technique:', currentType, 'rounds:', totalRounds);
+      scheduleNext();
+    });
+
+    btnStop.addEventListener('click', () => {
+      console.log('[Breathwork] Stopped by user');
+      stopSession(false);
+    });
+
+    // Type selector
+    document.getElementById('bw-type-grid').querySelectorAll('.bw-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (running) return;
+        document.querySelectorAll('.bw-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        setTechnique(btn.dataset.type);
+        console.log('[Breathwork] Technique changed:', btn.dataset.type);
+      });
+    });
+
+    // Duration selector
+    document.getElementById('bw-duration-presets').querySelectorAll('.bw-dur-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (running) return;
+        document.querySelectorAll('.bw-dur-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        totalRounds = parseInt(btn.dataset.rounds);
+        updateMetrics();
+        console.log('[Breathwork] Rounds set:', totalRounds);
+      });
+    });
+
+    // Cleanup on page unload — prevent orphaned timeouts/intervals
+    window.addEventListener('pagehide', () => stopSession(false));
+
+    // Init — box is the default active tab
+    setTechnique('box');
+    updateMetrics();
+
+    async function init() {
+      try {
+        const res = await apiFetch('/api/user/profile');
+        const data = await res.json();
+        renderSidebar(); renderTopbar(data.name || '');
+      } catch (_) { renderSidebar(); renderTopbar(''); }
+    }
+    init();
+  </script>
+</body>
+</html>

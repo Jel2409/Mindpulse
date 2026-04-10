@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mindpulse — Login</title>
+  <!-- Prevent flash: set background before any stylesheet parses -->
+  <style>html,body{background:#0f2a1d;}</style>
+  <link rel="stylesheet" href="/style.css" />
+  <!-- Font preconnects (both hosts required to avoid extra round-trip) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <!-- Preload the right-panel image so it's ready before paint -->
+  <link rel="preload" as="image" href="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=80&auto=format&fit=crop" />
+</head>
+<body class="auth-body">
+
+  <div class="split-screen">
+
+    <!-- ── LEFT: Login Form ── -->
+    <div class="split-left">
+      <div class="split-form-wrap">
+
+        <div class="split-logo">🧘 Mindpulse</div>
+
+        <!-- Login Panel -->
+        <div id="panel-login">
+          <h1 class="split-heading">Sign in</h1>
+          <p class="split-sub">Please enter your details to continue.</p>
+
+          <form id="login-form" novalidate>
+            <div class="form-group">
+              <label for="login-email">Email</label>
+              <input type="email" id="login-email" name="email" placeholder="you@example.com" autocomplete="email" required />
+            </div>
+            <div class="form-group">
+              <label for="login-password">Password</label>
+              <div class="password-wrapper">
+                <input type="password" id="login-password" name="password" placeholder="••••••••" autocomplete="current-password" required />
+                <button type="button" class="toggle-pw" aria-label="Show password" onclick="togglePw('login-password',this)">👁</button>
+              </div>
+            </div>
+
+            <div class="split-row-meta">
+              <label class="remember-label">
+                <input type="checkbox" id="remember-me" />
+                <span>Remember me</span>
+              </label>
+              <a href="#" id="forgot-link" class="auth-link">Forgot password?</a>
+            </div>
+
+            <div class="form-error" id="login-error" role="alert" aria-live="polite"></div>
+
+            <button type="submit" class="btn-split-primary" id="login-btn">Sign in</button>
+          </form>
+
+          <p class="split-footer-text">
+            Don't have an account?
+            <a href="#" id="go-signup" class="auth-link">Sign up for free</a>
+          </p>
+        </div>
+
+        <!-- Forgot Password Panel -->
+        <div id="panel-forgot" style="display:none;">
+          <h1 class="split-heading">Reset password</h1>
+          <p class="split-sub">Enter your email and we'll send you a reset link.</p>
+
+          <form id="forgot-form" novalidate>
+            <div class="form-group">
+              <label for="forgot-email">Email</label>
+              <input type="email" id="forgot-email" name="email" placeholder="you@example.com" autocomplete="email" required />
+            </div>
+            <div class="form-error" id="forgot-error" role="alert" aria-live="polite"></div>
+            <div class="form-success" id="forgot-success" role="status" aria-live="polite"></div>
+            <button type="submit" class="btn-split-primary" id="forgot-btn">Send Reset Link</button>
+          </form>
+
+          <p class="split-footer-text">
+            <a href="#" id="forgot-back-btn" class="auth-link">← Back to sign in</a>
+          </p>
+        </div>
+
+        <!-- Sign Up Panel -->
+        <div id="panel-signup" style="display:none;">
+          <h1 class="split-heading">Create account ✨</h1>
+          <p class="split-sub">Start your mindfulness journey today.</p>
+
+          <form id="signup-form" novalidate>
+            <div class="form-group">
+              <label for="signup-name">Full name</label>
+              <input type="text" id="signup-name" name="name" placeholder="Your name" autocomplete="name" required />
+            </div>
+            <div class="form-group">
+              <label for="signup-email">Email</label>
+              <input type="email" id="signup-email" name="email" placeholder="you@example.com" autocomplete="email" required />
+            </div>
+            <div class="form-group">
+              <label for="signup-password">Password</label>
+              <div class="password-wrapper">
+                <input type="password" id="signup-password" name="password" placeholder="••••••••" autocomplete="new-password" required />
+                <button type="button" class="toggle-pw" aria-label="Show password" onclick="togglePw('signup-password',this)">👁</button>
+              </div>
+            </div>
+            <div class="form-error" id="signup-error" role="alert" aria-live="polite"></div>
+            <button type="submit" class="btn-split-primary" id="signup-btn">Create Account</button>
+          </form>
+
+          <p class="split-footer-text">
+            Already have an account?
+            <a href="#" id="go-login" class="auth-link">Sign in</a>
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── RIGHT: Illustration ── -->
+    <div class="split-right" aria-hidden="true">
+      <div class="split-right-inner">
+        <img
+          src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=80&auto=format&fit=crop"
+          alt=""
+          class="split-image"
+          width="900"
+          fetchpriority="high"
+          decoding="async"
+        />
+        <div class="split-overlay">
+          <div class="split-quote">
+            <p class="split-quote-text">"The mind is like water. When it's turbulent, it's difficult to see. When it's calm, everything becomes clear."</p>
+            <p class="split-quote-author">— Prasad Mahes</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/script.js"></script>
+  <script>
+    // If already logged in, redirect immediately before showing the page
+    if (getToken()) {
+      window.location.replace('/dashboard.html');
+    } else {
+      document.documentElement.style.visibility = 'visible';
+    }
+
+    // Panel switching
+    function showPanel(name) {
+      ['login','forgot','signup'].forEach(p => {
+        document.getElementById('panel-' + p).style.display = p === name ? '' : 'none';
+      });
+    }
+
+    document.getElementById('forgot-link').addEventListener('click', e => {
+      e.preventDefault();
+      document.getElementById('forgot-error').textContent = '';
+      document.getElementById('forgot-success').textContent = '';
+      showPanel('forgot');
+    });
+    document.getElementById('forgot-back-btn').addEventListener('click', e => { e.preventDefault(); showPanel('login'); });
+    document.getElementById('go-signup').addEventListener('click', e => { e.preventDefault(); showPanel('signup'); });
+    document.getElementById('go-login').addEventListener('click', e => { e.preventDefault(); showPanel('login'); });
+
+    // Forgot password
+    document.getElementById('forgot-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const errEl = document.getElementById('forgot-error'), okEl = document.getElementById('forgot-success');
+      errEl.textContent = ''; okEl.textContent = '';
+      const email = document.getElementById('forgot-email').value.trim();
+      if (!email) { errEl.textContent = 'Email is required.'; return; }
+      const btn = document.getElementById('forgot-btn');
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const res = await fetch('/api/auth/forgot-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email}) });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Something went wrong.'; return; }
+        okEl.textContent = data.message;
+      } catch { errEl.textContent = 'Network error. Please try again.'; }
+      finally { btn.disabled = false; btn.textContent = 'Send Reset Link'; }
+    });
+
+    // Login
+    document.getElementById('login-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const loginError = document.getElementById('login-error');
+      loginError.textContent = '';
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      if (!email || !password) { loginError.textContent = 'Email and password are required.'; return; }
+      const btn = document.getElementById('login-btn');
+      btn.disabled = true; btn.textContent = 'Signing in…';
+      try {
+        const res = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password}) });
+        const data = await res.json();
+        if (!res.ok) { loginError.textContent = data.error || 'Login failed.'; return; }
+        setToken(data.token); window.location.href = '/dashboard.html';
+      } catch { loginError.textContent = 'Network error. Please try again.'; }
+      finally { btn.disabled = false; btn.textContent = 'Sign in'; }
+    });
+
+    // Signup
+    document.getElementById('signup-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const signupError = document.getElementById('signup-error');
+      signupError.textContent = '';
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      if (!name || !email || !password) { signupError.textContent = 'All fields are required.'; return; }
+      const btn = document.getElementById('signup-btn');
+      btn.disabled = true; btn.textContent = 'Creating account…';
+      try {
+        const res = await fetch('/api/auth/signup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name,email,password}) });
+        const data = await res.json();
+        if (!res.ok) { signupError.textContent = data.error || 'Signup failed.'; return; }
+        setToken(data.token); window.location.href = '/dashboard.html';
+      } catch { signupError.textContent = 'Network error. Please try again.'; }
+      finally { btn.disabled = false; btn.textContent = 'Create Account'; }
+    });
+
+    function togglePw(id, btn) {
+      const input = document.getElementById(id);
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.textContent = show ? '🙈' : '👁';
+      btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    }
+  </script>
+</body>
+</html>

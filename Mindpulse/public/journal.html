@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Journal — Mindpulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <nav id="sidebar"></nav>
+    <div class="main-content">
+      <header id="topbar"></header>
+      <div class="page-body">
+        <div class="page-title-row">
+          <h1 class="page-title">Journal</h1>
+          <button class="btn btn-primary" id="new-entry-btn">+ New Entry</button>
+        </div>
+
+        <div class="journal-layout">
+          <!-- Entries list -->
+          <div class="journal-sidebar-panel">
+            <div class="journal-sidebar-header">
+              <h3>Entries</h3>
+              <span id="entry-count" class="journal-entry-count"></span>
+            </div>
+            <div class="journal-entries-list" id="entries-list">
+              <div class="skeleton skeleton-card skeleton-entry"></div>
+              <div class="skeleton skeleton-card skeleton-entry"></div>
+            </div>
+          </div>
+
+          <!-- Editor / viewer -->
+          <div class="journal-editor-panel" id="editor-panel">
+            <!-- New entry form (shown by default) -->
+            <div id="new-entry-form">
+              <h2 class="section-title">New Entry</h2>
+              <div class="form-group">
+                <label for="journal-title">Title (optional)</label>
+                <input type="text" id="journal-title" placeholder="Give your entry a title..." />
+              </div>
+              <div class="form-group">
+                <label for="journal-content">What's on your mind?</label>
+                <textarea id="journal-content" placeholder="Write your thoughts here..." rows="7"></textarea>
+                <div class="form-error" id="content-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="mood-select">Mood</label>
+                <select id="mood-select">
+                  <option value="Happy">😊 Happy</option>
+                  <option value="Calm">😌 Calm</option>
+                  <option value="Neutral" selected>😐 Neutral</option>
+                  <option value="Anxious">😰 Anxious</option>
+                  <option value="Sad">😢 Sad</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" id="submit-btn">Save Entry</button>
+            </div>
+
+            <!-- Entry viewer (hidden by default) -->
+            <div id="entry-viewer" style="display:none;">
+              <div class="journal-viewer-header">
+                <h2 class="section-title" id="viewer-title">Entry</h2>
+                <button class="btn btn-danger btn-sm" id="delete-btn">Delete</button>
+              </div>
+              <div class="entry-header" id="viewer-header"></div>
+              <div class="entry-content" id="viewer-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="sidebar-hamburger" aria-label="Toggle menu"
+    onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+  <script src="/script.js"></script>
+  <script>
+    requireAuth();
+
+    let entries = [], activeId = null;
+
+    const titleEl    = document.getElementById('journal-title');
+    const contentEl  = document.getElementById('journal-content');
+    const moodEl     = document.getElementById('mood-select');
+    const submitBtn  = document.getElementById('submit-btn');
+    const contentErr = document.getElementById('content-error');
+    const entriesList = document.getElementById('entries-list');
+    const newForm    = document.getElementById('new-entry-form');
+    const viewer     = document.getElementById('entry-viewer');
+
+    function formatDate(d) {
+      return new Date(d).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    }
+
+    function showNewForm() {
+      activeId = null;
+      newForm.style.display = ''; viewer.style.display = 'none';
+      entriesList.querySelectorAll('.journal-entry-item').forEach(el => el.classList.remove('active'));
+    }
+
+    function showEntry(entry) {
+      activeId = entry._id;
+      newForm.style.display = 'none'; viewer.style.display = '';
+      document.getElementById('viewer-title').textContent = entry.title || 'Entry';
+      document.getElementById('viewer-header').innerHTML = `
+        <span class="entry-mood">${entry.mood}</span>
+        <span class="entry-date">${formatDate(entry.createdAt)}</span>
+      `;
+      document.getElementById('viewer-content').textContent = entry.content;
+      document.getElementById('delete-btn').dataset.id = entry._id;
+      entriesList.querySelectorAll('.journal-entry-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.id === entry._id);
+      });
+    }
+
+    function renderEntriesList() {
+      document.getElementById('entry-count').textContent = `${entries.length} entries`;
+      if (!entries.length) {
+        entriesList.innerHTML = '<p style="padding:1.25rem 1.5rem;font-size:0.85rem;color:var(--text-muted);">No entries yet.</p>';
+        return;
+      }
+      entriesList.innerHTML = entries.map(e => `
+        <div class="journal-entry-item${e._id===activeId?' active':''}" data-id="${e._id}" role="button" tabindex="0">
+          <div class="entry-item-mood">${e.mood}</div>
+          <div class="entry-item-preview">${(e.title || e.content).slice(0,60)}${(e.title||e.content).length>60?'…':''}</div>
+          <div class="entry-item-date">${formatDate(e.createdAt)}</div>
+        </div>
+      `).join('');
+      entriesList.querySelectorAll('.journal-entry-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const entry = entries.find(e => e._id === el.dataset.id);
+          if (entry) showEntry(entry);
+        });
+        el.addEventListener('keydown', ev => { if (ev.key==='Enter') el.click(); });
+      });
+    }
+
+    document.getElementById('new-entry-btn').addEventListener('click', showNewForm);
+
+    document.getElementById('delete-btn').addEventListener('click', async e => {
+      const id = e.target.dataset.id;
+      try {
+        const res = await apiFetch(`/api/journal/${id}`, { method:'DELETE' });
+        if (res.status === 204 || res.ok) {
+          entries = entries.filter(x => x._id !== id);
+          renderEntriesList();
+          showNewForm();
+        }
+      } catch(_) {}
+    });
+
+    submitBtn.addEventListener('click', async () => {
+      contentErr.textContent = '';
+      const content = contentEl.value.trim();
+      if (!content) { contentErr.textContent = 'Entry cannot be empty.'; return; }
+      submitBtn.disabled = true;
+      try {
+        const res = await apiFetch('/api/journal', {
+          method: 'POST',
+          body: JSON.stringify({ title: titleEl.value.trim(), content, mood: moodEl.value })
+        });
+        if (!res.ok) { const d = await res.json().catch(()=>({})); contentErr.textContent = d.error||'Failed to save.'; return; }
+        const entry = await res.json();
+        entries.unshift(entry);
+        titleEl.value = ''; contentEl.value = ''; moodEl.value = 'Neutral';
+        renderEntriesList();
+        showEntry(entry);
+      } catch(_) { contentErr.textContent = 'Network error.'; }
+      finally { submitBtn.disabled = false; }
+    });
+
+    async function loadEntries() {
+      try {
+        const res = await apiFetch('/api/journal');
+        entries = await res.json();
+        renderEntriesList();
+      } catch(_) {
+        entriesList.innerHTML = '<p style="padding:1.25rem 1.5rem;font-size:0.85rem;color:var(--text-muted);">Could not load entries.</p>';
+      }
+    }
+
+    async function init() {
+      try {
+        const res = await apiFetch('/api/user/profile');
+        const data = await res.json();
+        renderSidebar(); renderTopbar(data.name || '');
+      } catch(_) { renderSidebar(); renderTopbar(''); }
+      loadEntries();
+    }
+
+    init();
+  </script>
+</body>
+</html>

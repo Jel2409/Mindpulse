@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meditations — Mindpulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <!-- ── SESSION LIST VIEW ─────────────────────────────────────────── -->
+  <div class="app-layout" id="list-view">
+    <nav id="sidebar"></nav>
+    <div class="main-content">
+      <header id="topbar"></header>
+      <div class="page-body">
+        <h1 class="page-title">Meditations</h1>
+        <div class="filter-bar" id="filter-bar"></div>
+        <div class="sessions-grid" id="sessions-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SESSION PREVIEW MODAL ─────────────────────────────────────── -->
+  <div class="spm-backdrop" id="spm-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="spm-title">
+    <div class="spm-card">
+      <button class="spm-close" id="spm-close" aria-label="Close">✕</button>
+      <div class="spm-emoji" id="spm-emoji"></div>
+      <div class="spm-title" id="spm-title"></div>
+      <p class="spm-desc" id="spm-desc"></p>
+      <div class="spm-dur-row">
+        <span class="spm-dur-label">Duration</span>
+        <div class="spm-stepper">
+          <button class="spm-step-btn" id="spm-minus" aria-label="Decrease duration">−</button>
+          <span class="spm-step-val" id="spm-step-val">10 MIN</span>
+          <button class="spm-step-btn" id="spm-plus" aria-label="Increase duration">+</button>
+        </div>
+      </div>
+      <button class="spm-begin-btn" id="spm-begin">▶ Begin Session</button>
+      <button class="spm-save-btn" id="spm-save">Save for Later</button>
+    </div>
+  </div>
+
+  <!-- ── SESSION PLAYER VIEW ───────────────────────────────────────── -->
+  <div class="session-player" id="player-view" style="display:none;" aria-live="polite">
+    <!-- Background layer -->
+    <div class="sp-bg" id="sp-bg"></div>
+    <div class="sp-overlay"></div>
+
+    <!-- Back button -->
+    <button class="sp-back" id="sp-back" aria-label="Back to sessions">
+      ← Back
+    </button>
+
+    <!-- Center content -->
+    <div class="sp-content">
+      <div class="sp-emoji" id="sp-emoji"></div>
+      <div class="sp-category" id="sp-category"></div>
+      <h1 class="sp-title" id="sp-title"></h1>
+      <p class="sp-desc" id="sp-desc"></p>
+
+      <!-- Timer ring -->
+      <div class="sp-timer-wrap">
+        <svg class="sp-ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="sp-ring-track" cx="60" cy="60" r="54"/>
+          <circle class="sp-ring-progress" id="sp-ring-progress" cx="60" cy="60" r="54"/>
+        </svg>
+        <div class="sp-timer-inner">
+          <div class="sp-time" id="sp-time">00:00</div>
+          <div class="sp-time-label" id="sp-time-label">remaining</div>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="sp-progress-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="sp-progress-bar-wrap">
+        <div class="sp-progress-bar" id="sp-progress-bar"></div>
+      </div>
+
+      <!-- Controls -->
+      <div class="sp-controls">
+        <button class="sp-ctrl-btn sp-ctrl-reset" id="sp-reset" aria-label="Reset session" title="Reset">↺</button>
+        <button class="sp-ctrl-btn sp-ctrl-play" id="sp-play" aria-label="Start session">▶</button>
+        <button class="sp-ctrl-btn sp-ctrl-mute" id="sp-mute" aria-label="Toggle mute" title="Mute">🔊</button>
+      </div>
+
+      <!-- Complete message -->
+      <div class="sp-complete" id="sp-complete" style="display:none;">
+        <div class="sp-complete-icon">🎉</div>
+        <div class="sp-complete-title">Well Done!</div>
+        <div class="sp-complete-sub">Take a moment to notice how you feel.</div>
+        <div class="sp-complete-stats">
+          <div class="sp-complete-stat">
+            <div class="sp-complete-stat-val" id="sp-complete-mins">—</div>
+            <div class="sp-complete-stat-label">Minutes</div>
+          </div>
+          <div class="sp-complete-stat">
+            <div class="sp-complete-stat-val" id="sp-complete-streak">—</div>
+            <div class="sp-complete-stat-label">Day Streak</div>
+          </div>
+        </div>
+        <button class="sp-complete-btn" onclick="goBack()">Back to Sessions</button>
+        <button class="sp-complete-btn" onclick="window.location.href='/progress.html'" style="background:rgba(255,255,255,0.35);margin-top:0.25rem;">View Progress →</button>
+      </div>
+    </div>
+
+    <!-- Audio handled by MindpulseAudio controller (script.js) -->
+  </div>
+
+  <button class="sidebar-hamburger" aria-label="Toggle menu"
+    onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+  <script src="/script.js"></script>
+  <script>
+    requireAuth();
+
+    // ── State ──────────────────────────────────────────────────────────
+    let allSessions = [];
+    let activeFilter = 'All';
+    let pendingSession = null; // session waiting in the modal
+    // isPlaying: single source of truth for play/pause state
+    const timerState = { duration: 0, remaining: 0, isPlaying: false, intervalId: null, resumedAt: null, remainingAtResume: 0 };
+    const CIRCUMFERENCE = 2 * Math.PI * 54; // r=54
+    const DUR_OPTIONS = [5, 10, 15, 20, 30];
+    const DUR_KEY = 'mp_last_duration';
+    let modalDurIdx = 1; // index into DUR_OPTIONS, default 10 min
+
+    // ── Helpers ────────────────────────────────────────────────────────
+    function formatTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+    }
+
+    function getSessionIdFromUrl() {
+      return new URLSearchParams(window.location.search).get('session');
+    }
+
+    function setUrl(sessionId) {
+      const url = sessionId
+        ? `${window.location.pathname}?session=${sessionId}`
+        : window.location.pathname;
+      history.pushState({}, '', url);
+    }
+
+    // ── List View ──────────────────────────────────────────────────────
+    function renderFilterBar() {
+      const cats = ['All', ...new Set(allSessions.map(s => s.category))];
+      const bar = document.getElementById('filter-bar');
+      bar.innerHTML = cats.map(c =>
+        `<button class="filter-btn${c === activeFilter ? ' active' : ''}" data-cat="${c}">${c}</button>`
+      ).join('');
+      bar.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeFilter = btn.dataset.cat;
+          renderFilterBar();
+          renderCards();
+        });
+      });
+    }
+
+    function renderCards() {
+      const filtered = activeFilter === 'All' ? allSessions : allSessions.filter(s => s.category === activeFilter);
+      const list = document.getElementById('sessions-list');
+      list.className = 'sessions-grid premium';
+      if (!filtered.length) {
+        list.innerHTML = '<p style="color:var(--text-light)">No sessions found.</p>';
+        return;
+      }
+      list.innerHTML = filtered.map(s => `
+        <div class="session-card-premium" role="button" tabindex="0"
+          data-id="${s.id}"
+          aria-label="Start ${s.title}, ${Math.round(s.duration/60)} minutes">
+          <div class="scp-gradient-top"
+            style="${s.background
+              ? `background-image: url('${s.background}'); background-size: cover; background-position: center;`
+              : `background: ${s.gradient || 'linear-gradient(135deg,var(--sage),var(--sage-glow))'};`
+            }">
+            <div class="scp-icon-wrap">${s.emoji}</div>
+            <div class="scp-badges">
+              <span class="scp-badge">${s.category}</span>
+              <span class="scp-badge">${Math.round(s.duration / 60)} min</span>
+            </div>
+          </div>
+          <div class="scp-body">
+            <div class="scp-title">${s.title}</div>
+            <div class="scp-desc">${s.description}</div>
+            <div class="scp-footer">
+              <span class="scp-duration">⏱ ${Math.round(s.duration / 60)} min</span>
+              <button class="scp-play-btn" data-id="${s.id}" aria-label="Play ${s.title}">▶</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.scp-play-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const s = allSessions.find(x => String(x.id) === btn.dataset.id);
+          if (s) openModal(s);
+        });
+      });
+      list.querySelectorAll('.session-card-premium').forEach(card => {
+        card.addEventListener('click', () => {
+          const s = allSessions.find(x => String(x.id) === card.dataset.id);
+          if (s) openModal(s);
+        });
+        card.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+        });
+      });
+    }
+
+    // ── Session Preview Modal ──────────────────────────────────────────
+    function openModal(session) {
+      pendingSession = session;
+      // Restore last used duration
+      const saved = parseInt(localStorage.getItem(DUR_KEY));
+      modalDurIdx = DUR_OPTIONS.includes(saved)
+        ? DUR_OPTIONS.indexOf(saved)
+        : (DUR_OPTIONS.indexOf(Math.round(session.duration / 60)) !== -1
+            ? DUR_OPTIONS.indexOf(Math.round(session.duration / 60))
+            : 1);
+      document.getElementById('spm-emoji').textContent = session.emoji;
+      document.getElementById('spm-title').textContent = session.title;
+      document.getElementById('spm-desc').textContent  = session.description;
+      updateStepperUI();
+      document.getElementById('spm-backdrop').style.display = 'flex';
+      document.getElementById('spm-begin').focus();
+    }
+
+    function closeModal() {
+      document.getElementById('spm-backdrop').style.display = 'none';
+      pendingSession = null;
+    }
+
+    function updateStepperUI() {
+      const mins = DUR_OPTIONS[modalDurIdx];
+      document.getElementById('spm-step-val').textContent = mins + ' MIN';
+      document.getElementById('spm-minus').disabled = modalDurIdx === 0;
+      document.getElementById('spm-plus').disabled  = modalDurIdx === DUR_OPTIONS.length - 1;
+    }
+
+    document.getElementById('spm-minus').addEventListener('click', () => {
+      if (modalDurIdx > 0) { modalDurIdx--; updateStepperUI(); }
+    });
+    document.getElementById('spm-plus').addEventListener('click', () => {
+      if (modalDurIdx < DUR_OPTIONS.length - 1) { modalDurIdx++; updateStepperUI(); }
+    });
+    document.getElementById('spm-close').addEventListener('click', closeModal);
+    document.getElementById('spm-backdrop').addEventListener('click', e => {
+      if (e.target === document.getElementById('spm-backdrop')) closeModal();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    document.getElementById('spm-begin').addEventListener('click', () => {
+      if (!pendingSession) return;
+      const mins = DUR_OPTIONS[modalDurIdx];
+      localStorage.setItem(DUR_KEY, mins);
+      const session = pendingSession;
+      closeModal();
+      openPlayer(session, mins);
+    });
+
+    document.getElementById('spm-save').addEventListener('click', () => {
+      if (!pendingSession) return;
+      const saved = JSON.parse(localStorage.getItem('mp_saved_sessions') || '[]');
+      if (!saved.find(x => x.id === pendingSession.id)) {
+        saved.push({ id: pendingSession.id, title: pendingSession.title, emoji: pendingSession.emoji });
+        localStorage.setItem('mp_saved_sessions', JSON.stringify(saved));
+      }
+      closeModal();
+    });
+
+    // ── Player View ────────────────────────────────────────────────────
+    function openPlayer(session, durationMins) {
+      // Stop any running timer
+      stopTimer();
+
+      // Set URL
+      setUrl(session.id);
+
+      // Populate UI
+      document.getElementById('sp-emoji').textContent = session.emoji;
+      document.getElementById('sp-category').textContent = session.category;
+      document.getElementById('sp-title').textContent = session.title;
+      document.getElementById('sp-desc').textContent = session.description;
+
+      // Background — apply gradient immediately, then fade in image once loaded
+      const bg = document.getElementById('sp-bg');
+      const fallback = session.gradient || 'linear-gradient(135deg,#1f3d2b,#3a8f64)';
+
+      // Map session IDs to dedicated CSS classes (local images with built-in overlay)
+      const SESSION_BG_CLASSES = {
+        peace:      'inner-peace-bg',
+        confidence: 'confidence-bg',
+      };
+
+      // Clear any previous session class
+      bg.classList.remove('inner-peace-bg', 'confidence-bg');
+      bg.style.transition = 'none';
+      bg.style.opacity = '1';
+      bg.style.backgroundImage = '';
+      bg.style.background = fallback;
+
+      const bgClass = SESSION_BG_CLASSES[session.id];
+
+      if (bgClass) {
+        // Use CSS class — local image with gradient overlay baked in
+        bg.style.transition = 'opacity 0.6s ease';
+        bg.style.opacity = '0';
+        bg.style.background = '';
+        setTimeout(() => {
+          bg.classList.add(bgClass);
+          bg.style.opacity = '1';
+        }, 50);
+      } else if (session.background) {
+        const img = new Image();
+        img.onload = () => {
+          bg.style.transition = 'opacity 0.6s ease';
+          bg.style.opacity = '0';
+          setTimeout(() => {
+            bg.style.backgroundImage = `url('${session.background}')`;
+            bg.style.backgroundSize = 'cover';
+            bg.style.backgroundPosition = 'center';
+            bg.style.backgroundRepeat = 'no-repeat';
+            bg.style.opacity = '1';
+          }, 50);
+        };
+        img.onerror = () => {
+          bg.style.background = fallback;
+          bg.style.backgroundImage = '';
+        };
+        img.src = session.background;
+      }
+
+      // Timer state — use duration passed from modal
+      timerState.duration = durationMins * 60;
+      timerState.remaining = timerState.duration;
+      timerState.isPlaying = false;
+      updateTimerUI();
+
+      // Audio — stop any previous audio, set source for new session
+      MindpulseAudio.stop();
+      MindpulseAudio.setVolume(0.3);
+      document.getElementById('sp-mute').textContent = '🔊';
+      timerState.audioSrc = session.audio || '/audio/ambient.wav';
+      timerState.audioLoop = session.loop || false;
+
+      // Reset complete state
+      document.getElementById('sp-complete').style.display = 'none';
+      document.getElementById('sp-play').textContent = '⏸️';
+      document.getElementById('sp-play').setAttribute('aria-label', 'Pause session');
+
+      // Show player, hide list
+      document.getElementById('list-view').style.display = 'none';
+      document.getElementById('player-view').style.display = 'flex';
+      document.body.classList.add('player-open');
+
+      // Auto-start session
+      startTimer();
+    }
+
+    function goBack() {
+      stopTimer();
+      MindpulseAudio.stop();
+      setUrl(null);
+      // Clear custom bg classes
+      const bg = document.getElementById('sp-bg');
+      bg.classList.remove('inner-peace-bg', 'confidence-bg');
+      bg.style.background = '';
+      bg.style.backgroundImage = '';
+      document.getElementById('player-view').style.display = 'none';
+      document.getElementById('list-view').style.display = 'flex';
+      document.body.classList.remove('player-open');
+    }
+
+    // ── Timer Logic ────────────────────────────────────────────────────
+    function updateTimerUI() {
+      const { duration, remaining } = timerState;
+      document.getElementById('sp-time').textContent = formatTime(remaining);
+
+      const pct = duration > 0 ? (duration - remaining) / duration : 0;
+      const offset = CIRCUMFERENCE * (1 - pct);
+      document.getElementById('sp-ring-progress').style.strokeDashoffset = offset;
+
+      const pb = document.getElementById('sp-progress-bar');
+      pb.style.width = `${Math.round(pct * 100)}%`;
+      document.getElementById('sp-progress-bar-wrap').setAttribute('aria-valuenow', Math.round(pct * 100));
+      document.getElementById('sp-time-label').textContent = 'remaining';
+    }
+
+    function timerTick() {
+      timerState.remaining--;
+      if (timerState.remaining <= 0) {
+        timerState.remaining = 0;
+        updateTimerUI();
+        clearInterval(timerState.intervalId);
+        timerState.intervalId = null;
+        timerState.isPlaying = false;
+        onSessionComplete();
+        return;
+      }
+      updateTimerUI();
+    }
+
+    function startTimer() {
+      if (timerState.isPlaying) return;
+      if (timerState.remaining <= 0) return; // session already complete
+      if (timerState.intervalId) { clearInterval(timerState.intervalId); timerState.intervalId = null; }
+      timerState.isPlaying = true;
+      // Track when this play segment started and how much was remaining at that point
+      timerState.resumedAt = Date.now();
+      timerState.remainingAtResume = timerState.remaining;
+      timerState.intervalId = setInterval(timerTick, 1000);
+      document.getElementById('sp-play').textContent = '⏸️';
+      document.getElementById('sp-play').setAttribute('aria-label', 'Pause session');
+
+      if (timerState.audioSrc) {
+        MindpulseAudio.play(timerState.audioSrc, { loop: timerState.audioLoop });
+      }
+    }
+
+    function pauseTimer() {
+      if (!timerState.isPlaying) return;
+      clearInterval(timerState.intervalId);
+      timerState.intervalId = null;
+      timerState.isPlaying = false;
+      timerState.resumedAt = null;
+      document.getElementById('sp-play').textContent = '▶️';
+      document.getElementById('sp-play').setAttribute('aria-label', 'Resume session');
+      MindpulseAudio.pause();
+    }
+
+    function stopTimer() {
+      if (timerState.intervalId) {
+        clearInterval(timerState.intervalId);
+        timerState.intervalId = null;
+      }
+      timerState.isPlaying = false;
+      timerState.resumedAt = null;
+    }
+
+    function resetTimer() {
+      stopTimer();
+      MindpulseAudio.stop();
+      timerState.remaining = timerState.duration;
+      document.getElementById('sp-complete').style.display = 'none';
+      document.getElementById('sp-play').textContent = '▶️';
+      document.getElementById('sp-play').setAttribute('aria-label', 'Start session');
+      updateTimerUI();
+    }
+
+    function onSessionComplete() {
+      MindpulseAudio.stop();
+      timerState.isPlaying = false;
+      timerState.resumedAt = null;
+      document.getElementById('sp-play').textContent = '▶️';
+      document.getElementById('sp-play').setAttribute('aria-label', 'Restart session');
+      document.getElementById('sp-complete').style.display = 'flex';
+
+      const minutes = Math.round(timerState.duration / 60);
+      document.getElementById('sp-complete-mins').textContent = minutes;
+      saveCompletedSession(minutes);
+
+      apiFetch('/api/user/session', {
+        method: 'POST',
+        body: JSON.stringify({ minutes })
+      }).then(r => r.json()).then(data => {
+        if (data.stats) {
+          document.getElementById('sp-complete-streak').textContent = data.stats.streak ?? '—';
+        }
+      }).catch(() => {
+        document.getElementById('sp-complete-streak').textContent = '—';
+      });
+    }
+
+    // ── localStorage progress ──────────────────────────────────────────
+    function saveCompletedSession(minutes) {
+      const key = 'mp_completed_sessions';
+      const existing = JSON.parse(localStorage.getItem(key) || '[]');
+      existing.push({ date: new Date().toISOString(), minutes });
+      localStorage.setItem(key, JSON.stringify(existing));
+    }
+
+    // ── Control bindings ───────────────────────────────────────────────
+    document.getElementById('sp-play').addEventListener('click', () => {
+      if (timerState.isPlaying) pauseTimer();
+      else startTimer();
+    });
+
+    document.getElementById('sp-reset').addEventListener('click', resetTimer);
+
+    document.getElementById('sp-mute').addEventListener('click', () => {
+      const btn = document.getElementById('sp-mute');
+      if (MindpulseAudio.volume > 0) {
+        MindpulseAudio.setVolume(0);
+        btn.textContent = '🔇';
+      } else {
+        MindpulseAudio.setVolume(0.3);
+        btn.textContent = '🔊';
+      }
+    });
+
+    document.getElementById('sp-back').addEventListener('click', goBack);
+
+    // Handle browser back button
+    window.addEventListener('popstate', () => {
+      const id = getSessionIdFromUrl();
+      if (!id) goBack();
+    });
+
+    // Page Visibility API — correct timer drift when tab was hidden/throttled
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && timerState.isPlaying && timerState.resumedAt !== null) {
+        const elapsed = Math.floor((Date.now() - timerState.resumedAt) / 1000);
+        const expected = timerState.remainingAtResume - elapsed;
+        if (expected < timerState.remaining) {
+          timerState.remaining = Math.max(0, expected);
+          updateTimerUI();
+          if (timerState.remaining <= 0) {
+            clearInterval(timerState.intervalId);
+            timerState.intervalId = null;
+            timerState.isPlaying = false;
+            onSessionComplete();
+          }
+        }
+      }
+    });
+
+    // Cleanup on page unload — prevent orphaned intervals and fades
+    window.addEventListener('pagehide', () => {
+      stopTimer();
+      MindpulseAudio.stop();
+    });
+
+    // ── Init ───────────────────────────────────────────────────────────
+    async function init() {
+      try {
+        const res = await apiFetch('/api/user/profile');
+        const data = await res.json();
+        renderSidebar();
+        renderTopbar(data.name || '');
+      } catch (_) {
+        renderSidebar();
+        renderTopbar('');
+      }
+
+      try {
+        const res = await apiFetch('/api/meditations');
+        allSessions = await res.json();
+        renderFilterBar();
+        renderCards();
+      } catch (_) {
+        document.getElementById('sessions-list').innerHTML =
+          '<p style="color:var(--text-light)">Unable to load sessions.</p>';
+      }
+
+      // If URL has ?session=, open modal for that session directly
+      const sessionId = getSessionIdFromUrl();
+      if (sessionId && allSessions.length) {
+        const s = allSessions.find(x => String(x.id) === sessionId);
+        if (s) openModal(s);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

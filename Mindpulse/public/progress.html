@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Progress — Mindpulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    /* ── Progress Page Layout ── */
+    .progress-page {
+      max-width: 100%;
+    }
+
+    /* Greeting + Begin Session row */
+    .progress-toprow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .progress-greeting {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-light);
+    }
+    .progress-greeting strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+    .btn-begin-session {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1.25rem;
+      border-radius: 50px;
+      border: none;
+      background: linear-gradient(135deg, var(--sage-light), var(--sage-glow));
+      color: var(--white);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all var(--transition);
+      box-shadow: 0 3px 10px rgba(46,111,78,0.3);
+      text-decoration: none;
+    }
+    .btn-begin-session:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(46,111,78,0.4);
+    }
+
+    /* ── 2×2 Stats Grid ── */
+    .prog-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .prog-stat-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 2rem 2.25rem;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,0.04);
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    .prog-stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    .prog-stat-value {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -2px;
+      line-height: 1;
+      margin-bottom: 0.35rem;
+      font-family: 'Poppins', sans-serif;
+    }
+    .prog-stat-value sup {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0;
+      color: var(--text-light);
+      vertical-align: super;
+    }
+    .prog-stat-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .prog-stat-streak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #f97316;
+      background: rgba(249,115,22,0.1);
+      padding: 0.15rem 0.5rem;
+      border-radius: 20px;
+      margin-top: 0.3rem;
+    }
+
+    /* ── Activity Section ── */
+    .prog-section {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 1.75rem 2.25rem;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,0.04);
+      margin-bottom: 1.25rem;
+    }
+    .prog-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .prog-section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.2px;
+    }
+    .prog-section-meta {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Activity squares */
+    .prog-activity-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .prog-sq {
+      width: 26px;
+      height: 26px;
+      border-radius: 5px;
+      background: var(--cream-dark);
+      transition: background var(--transition), transform var(--transition);
+      cursor: default;
+      flex-shrink: 0;
+    }
+    .prog-sq.active {
+      background: var(--sage-light);
+    }
+    .prog-sq.active-high {
+      background: var(--sage-glow);
+    }
+    .prog-sq.today {
+      background: var(--sage);
+      box-shadow: 0 0 0 2px rgba(46,111,78,0.3);
+    }
+    .prog-sq.future {
+      background: var(--cream);
+      opacity: 0.45;
+    }
+    .prog-sq:hover:not(.future) {
+      transform: scale(1.2);
+    }
+
+    /* ── Achievements ── */
+    .prog-achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 1rem;
+    }
+    .prog-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 1.4rem 0.75rem 1.1rem;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--cream-dark);
+      background: var(--white);
+      transition: all var(--transition);
+      gap: 0.35rem;
+    }
+    .prog-badge.unlocked {
+      border-color: rgba(46,111,78,0.25);
+      background: rgba(46,111,78,0.03);
+    }
+    .prog-badge.unlocked:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 18px rgba(46,111,78,0.12);
+      border-color: rgba(46,111,78,0.4);
+    }
+    .prog-badge.locked {
+      opacity: 0.42;
+      filter: grayscale(1);
+    }
+    .prog-badge-icon { font-size: 2rem; }
+    .prog-badge-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .prog-badge-desc {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      font-weight: 400;
+    }
+
+    @media (max-width: 600px) {
+      .prog-stats-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+      .prog-stat-card { padding: 1.5rem; }
+      .prog-stat-value { font-size: 2.2rem; }
+      .prog-achievements-grid { grid-template-columns: repeat(3, 1fr); }
+      .prog-sq { width: 20px; height: 20px; }
+    }
+    @media (max-width: 400px) {
+      .prog-stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <nav id="sidebar"></nav>
+    <div class="main-content">
+      <header id="topbar"></header>
+      <div class="page-body progress-page">
+
+        <!-- Top row: greeting + CTA -->
+        <div class="progress-toprow">
+          <p class="progress-greeting" id="prog-greeting">Good evening, <strong>—</strong> ▾</p>
+          <a href="/meditation.html" class="btn-begin-session">▶ Begin Session</a>
+        </div>
+
+        <!-- 2×2 Stats -->
+        <div class="prog-stats-grid" id="prog-stats">
+          <div class="prog-stat-card">
+            <div class="prog-stat-value" id="stat-sessions">—</div>
+            <div class="prog-stat-label">Total sessions completed</div>
+          </div>
+          <div class="prog-stat-card">
+            <div class="prog-stat-value" id="stat-streak">—</div>
+            <div class="prog-stat-label">Day streak 🔥</div>
+            <div class="prog-stat-streak-badge" id="streak-badge" style="display:none">🔥 Active streak</div>
+          </div>
+          <div class="prog-stat-card">
+            <div class="prog-stat-value" id="stat-hours">—</div>
+            <div class="prog-stat-label">Total meditation time</div>
+          </div>
+          <div class="prog-stat-card">
+            <div class="prog-stat-value" id="stat-avg">—</div>
+            <div class="prog-stat-label">Avg. session duration</div>
+          </div>
+        </div>
+
+        <!-- Monthly Activity -->
+        <div class="prog-section">
+          <div class="prog-section-header">
+            <h2 class="prog-section-title" id="activity-title">April Activity</h2>
+            <span class="prog-section-meta" id="activity-meta">Today · 1 min</span>
+          </div>
+          <div class="prog-activity-grid" id="activity-grid"></div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="prog-section">
+          <div class="prog-section-header">
+            <h2 class="prog-section-title">Achievements</h2>
+          </div>
+          <div class="prog-achievements-grid" id="achievements-grid"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <button class="sidebar-hamburger" aria-label="Toggle menu"
+    onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+  <script src="/script.js"></script>
+  <script>
+    requireAuth();
+
+    const ACHIEVEMENTS = [
+      { label: 'First Step',     emoji: '🌱', desc: 'Complete first session',   criteria: s => s.sessions >= 1 },
+      { label: 'Week Warrior',   emoji: '🔥', desc: '7-day streak',             criteria: s => s.streak >= 7 },
+      { label: 'Regular',        emoji: '⭐', desc: '10 sessions done',         criteria: s => s.sessions >= 10 },
+      { label: 'Fortnight',      emoji: '🏅', desc: '14-day streak',            criteria: s => s.streak >= 14 },
+      { label: 'Month Mind',     emoji: '🧘', desc: '30 sessions done',         criteria: s => s.sessions >= 30 },
+      { label: 'Century',        emoji: '💯', desc: '100 total minutes',        criteria: s => s.totalMinutes >= 100 },
+      { label: '5 Hours',        emoji: '⏱️', desc: '300 total minutes',        criteria: s => s.totalMinutes >= 300 },
+      { label: 'Nature Seeker',  emoji: '🌿', desc: '500 total minutes',        criteria: s => s.totalMinutes >= 500 },
+    ];
+
+    function getGreeting() {
+      const h = new Date().getHours();
+      if (h < 12) return 'morning';
+      if (h < 18) return 'afternoon';
+      return 'evening';
+    }
+
+    function fmtHours(minutes) {
+      if (!minutes) return '0';
+      const h = minutes / 60;
+      return h >= 10 ? Math.round(h) + 'h' : h.toFixed(1) + 'h';
+    }
+
+    function fmtAvg(minutes, sessions) {
+      if (!sessions) return '0 min';
+      const avg = minutes / sessions;
+      return avg.toFixed(1) + ' min';
+    }
+
+    function renderStats(stats) {
+      const sessions = stats.sessions ?? 0;
+      const streak   = stats.streak ?? 0;
+      const mins     = stats.totalMinutes ?? 0;
+
+      document.getElementById('stat-sessions').textContent = sessions;
+      document.getElementById('stat-streak').textContent   = streak;
+      document.getElementById('stat-hours').textContent    = fmtHours(mins);
+      document.getElementById('stat-avg').textContent      = fmtAvg(mins, sessions);
+
+      const badge = document.getElementById('streak-badge');
+      if (streak > 0) {
+        badge.style.display = 'inline-flex';
+        badge.textContent = '🔥 ' + streak + '-day streak';
+      }
+    }
+
+    function renderActivityGrid(activityLog) {
+      const now   = new Date();
+      const year  = now.getFullYear();
+      const month = now.getMonth();
+      const monthName   = now.toLocaleString('default', { month: 'long' });
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today       = now.getDate();
+
+      document.getElementById('activity-title').textContent = monthName + ' Activity';
+
+      // Find today's entry for meta label
+      const todayKey = `${year}-${String(month+1).padStart(2,'0')}-${String(today).padStart(2,'0')}`;
+      const todayEntry = activityLog.find(a => a.date === todayKey);
+      const metaEl = document.getElementById('activity-meta');
+      metaEl.textContent = todayEntry && todayEntry.minutes > 0
+        ? `Today · ${todayEntry.minutes} min`
+        : 'Today · 0 min';
+
+      const grid = document.getElementById('activity-grid');
+      grid.innerHTML = Array.from({ length: daysInMonth }, (_, i) => {
+        const day = i + 1;
+        const key = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const entry = activityLog.find(a => a.date === key);
+        const mins  = entry ? entry.minutes : 0;
+        const future = day > today;
+        const isToday = day === today;
+
+        let cls = '';
+        if (future)       cls = 'future';
+        else if (isToday) cls = 'today';
+        else if (mins >= 20) cls = 'active-high';
+        else if (mins > 0)   cls = 'active';
+
+        const title = future ? `Day ${day}` : (mins > 0 ? `${monthName} ${day} — ${mins} min` : `${monthName} ${day}`);
+        return `<div class="prog-sq ${cls}" title="${title}"></div>`;
+      }).join('');
+    }
+
+    function renderAchievements(stats) {
+      document.getElementById('achievements-grid').innerHTML = ACHIEVEMENTS.map(a => {
+        const unlocked = a.criteria(stats);
+        return `<div class="prog-badge ${unlocked ? 'unlocked' : 'locked'}" title="${a.label}: ${a.desc}">
+          <div class="prog-badge-icon">${a.emoji}</div>
+          <div class="prog-badge-label">${a.label}</div>
+          <div class="prog-badge-desc">${a.desc}</div>
+        </div>`;
+      }).join('');
+    }
+
+    async function init() {
+      try {
+        const res  = await apiFetch('/api/user/profile');
+        const data = await res.json();
+        const name = data.name ? data.name.split(' ')[0] : '';
+        document.getElementById('prog-greeting').innerHTML =
+          `Good ${getGreeting()}, <strong>${name || 'there'}</strong> ▾`;
+        renderSidebar();
+        renderTopbar(data.name || '');
+        const stats      = data.stats || {};
+        const activityLog = data.activityLog || [];
+        renderStats(stats);
+        renderActivityGrid(activityLog);
+        renderAchievements(stats);
+      } catch (e) {
+        renderSidebar(); renderTopbar('');
+        renderStats({});
+        renderActivityGrid([]);
+        renderAchievements({});
+      }
+    }
+
+    init();
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) init();
+    });
+  </script>
+</body>
+</html>
